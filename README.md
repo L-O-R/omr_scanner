@@ -105,12 +105,7 @@ Returns the comparison results with:
 
 ## 🧑‍💻 Author
 
-Built with ❤️ by **Lokesh Rathi**  
-<a href="[https://www.felixits.com](https://www.felix-its.com/)" target="_blank" style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none;">
-<span style="font-size: 1rem; font-weight: bold;"> Trainer @ </span>
-  <img src="FelixITLogo.jpg" alt="Felix IT System" height="20" style="vertical-align: middle;" />
-  <span style="font-size: 1rem; font-weight: bold;">Felix IT System</span>
-</a>
+© 2025 **Felix IT System**. All rights reserved.
 
 ---
 
