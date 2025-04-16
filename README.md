@@ -30,6 +30,10 @@ A Flask-based web application for automatically comparing scanned answer sheets 
 ## 📂 Project Structure
 
 ```
+├── Sheets/
+│   └── 15.jpg              #Sample image for the project 
+│   └── 16.jpg              # Sample Answer sheet
+│   └── 17.jpg              # Sample student answer sheet
 ├── flask_app.py                  # Flask backend
 ├── templates/
 │   └── index.html          # Frontend HTML
