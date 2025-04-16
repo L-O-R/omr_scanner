@@ -106,6 +106,7 @@ Returns the comparison results with:
 ## 🧑‍💻 Author
 
 Built with ❤️ by [Lokesh Rathi]
+Trainer @ ![FelixIT](FelixITLogo.jpg)Felix IT System
 
 ---
 
