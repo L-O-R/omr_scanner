@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Answer Sheet Comparator</title>
+    <style>
+      /* General Styles */
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana,
+          sans-serif;
+        background: #f5f7fa;
+        padding: 40px;
+        color: #333;
+        margin: 0;
+      }
+
+      .container {
+        max-width: 750px;
+        margin: auto;
+        background: #fff;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        text-align: center;
+        color: #2c3e50;
+        font-size: 2rem;
+      }
+
+      label {
+        font-weight: bold;
+        margin-top: 20px;
+        display: block;
+        color: #34495e;
+      }
+
+      input[type="file"] {
+        margin-top: 10px;
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+      }
+
+      button {
+        margin-top: 30px;
+        background-color: #3498db;
+        color: white;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: pointer;
+        width: 100%;
+        transition: background-color 0.3s ease;
+      }
+
+      button:hover {
+        background-color: #2980b9;
+      }
+
+      /* Loading Spinner */
+      .loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.4);
+        z-index: 999;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .spinner {
+        border: 6px solid rgba(255, 255, 255, 0.3);
+        border-top: 6px solid #3498db;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Results Styling */
+      .results {
+        margin-top: 30px;
+        padding: 20px;
+        background: #ecf0f1;
+        border-radius: 8px;
+        display: none;
+      }
+
+      .results h3 {
+        margin-top: 0;
+        color: #34495e;
+        font-size: 1.5rem;
+      }
+
+      .result-item {
+        background: #fff;
+        margin-bottom: 10px;
+        padding: 12px;
+        border-radius: 6px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        font-size: 1rem;
+      }
+
+      .result-item span {
+        color: #16a085;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Answer Sheet Comparator</h1>
+      <form id="upload-form">
+        <label for="official-answer"
+          >Official Answer Sheet:</label
+        >
+        <input
+          type="file"
+          id="official-answer"
+          required
+          accept="image/*" />
+
+        <label for="candidate-answers"
+          >Candidate Answer Sheets:</label
+        >
+        <input
+          type="file"
+          id="candidate-answers"
+          multiple
+          required
+          accept="image/*" />
+
+        <button type="submit">Compare Answers</button>
+      </form>
+
+      <!-- Loading Spinner -->
+      <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+      </div>
+
+      <div class="results" id="results">
+        <h3>Results</h3>
+        <div id="results-content"></div>
+      </div>
+    </div>
+
+    <script>
+      //   const baseUrl = "https://lor.pythonanywhere.com";
+      const baseUrl = "http://127.0.0.1:5000";
+      document
+        .getElementById("upload-form")
+        .addEventListener("submit", async function (event) {
+          event.preventDefault();
+
+          const officialInput = document.getElementById(
+            "official-answer"
+          );
+          const candidateInput = document.getElementById(
+            "candidate-answers"
+          );
+
+          if (
+            !officialInput.files.length ||
+            !candidateInput.files.length
+          ) {
+            alert(
+              "Please upload both official and candidate answer sheets."
+            );
+            return;
+          }
+
+          // Show loading overlay
+          document.getElementById(
+            "loading-overlay"
+          ).style.display = "flex";
+
+          const formData = new FormData();
+          formData.append(
+            "official_answer",
+            officialInput.files[0]
+          );
+
+          for (let file of candidateInput.files) {
+            formData.append("candidates", file);
+          }
+
+          try {
+            // Upload files to server first
+            const uploadResponse = await fetch(
+              `${baseUrl}/upload_files`,
+              {
+                method: "POST",
+                body: formData,
+              }
+            );
+
+            const uploadResult =
+              await uploadResponse.json();
+
+            if (uploadResult.error) {
+              alert(uploadResult.error);
+              document.getElementById(
+                "loading-overlay"
+              ).style.display = "none";
+              return;
+            }
+
+            // Call the compare_answers API
+            const response = await fetch(
+              `${baseUrl}/compare_answers`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  official_answer_path:
+                    uploadResult.official_answer_path,
+                  candidate_answer_paths:
+                    uploadResult.candidate_answer_paths,
+                }),
+              }
+            );
+
+            const resultData = await response.json();
+            const resultsDiv =
+              document.getElementById("results");
+            const contentDiv = document.getElementById(
+              "results-content"
+            );
+
+            contentDiv.innerHTML = "";
+            resultData.results.forEach((item) => {
+              const div = document.createElement("div");
+              div.classList.add("result-item");
+              div.innerHTML = `
+  <strong>Candidate:</strong> <span>${
+    item.candidate_path
+  }</span><br />
+  <strong>Total Questions:</strong> <span>${
+    item.total_questions
+  }</span><br />
+  <strong>Correct:</strong> <span>${
+    item.correct_answers
+  }</span><br />
+  <strong>Incorrect:</strong> <span>${
+    item.incorrect_answers
+  }</span><br /><br />
+  <strong>Total Marks:</strong> <span>${
+    item.correct_answers
+  }</span><br />
+  <strong>Percentage:</strong> <span>${
+    (item.correct_answers / item.total_questions) * 100
+  }%</span><br />
+`;
+              contentDiv.appendChild(div);
+            });
+
+            resultsDiv.style.display = "block";
+          } catch (error) {
+            alert("An error occurred during the process.");
+          } finally {
+            // Hide loading overlay
+            document.getElementById(
+              "loading-overlay"
+            ).style.display = "none";
+          }
+        });
+    </script>
+  </body>
+</html>
